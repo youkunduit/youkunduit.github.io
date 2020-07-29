@@ -46,7 +46,7 @@ define([
           //
           const survey123WebForm = new Survey123WebForm({
             container: "survey123-webform",
-            clientId: "kC3LdPudTY67vLfd",
+            clientId: "j9ndzScs7UsGvNC9",
             portalUrl: "https://nycdot.maps.arcgis.com",
             itemId: "6ed19d513abf4d0899f05e49d39142f2"
           });
