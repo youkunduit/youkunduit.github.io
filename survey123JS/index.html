@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
+    <script src="https://js.arcgis.com/4.14/"></script>
+    <script src="https://survey123.arcgis.com/api/jsapi"></script>
+    <title></title>
+    <style>
+        html,
+        body,
+        #survey123-webform {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="survey123-webform"></div>
+    <script>
+        require(["esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/identity/IdentityManager"], 
+        function(QueryTask, Query) {
+
+            // Information about service to check BID number against. UPDATE THIS. ============
+            var bid_svc_url = "https://services.arcgis.com/wmZOI9vyUBq1zTZx/arcgis/rest/services/NYC_Open_Streets_Application_FINAL_JS_Validation/FeatureServer/0"
+            var bid_svc_column = "application_ID"
+            var bid_svc_filter = "1=1"
+            // Information about service for FSE validation
+            var fse_svc_url = "https://services.arcgis.com/wmZOI9vyUBq1zTZx/arcgis/rest/services/fse_permits_view/FeatureServer/0"
+            var fse_svc_column = "*"
+            var fse_svc_filter = "1=1"
+            // Information about the form
+            var bid_form_field = "bidNumber"
+            var fse_form_field = "FSE"
+            var bid_value_length = 27 // number of characters that valid BID number has
+            var fse_value_length = 8 // number of characters that valid FSE number has
+            var fsevalidation_field_valid = {'fseNumberValidation':'Valid'}    // field to be updated, and value to set it to, if fse passes validation
+            var fsevalidation_field_invalid = {'fseNumberValidation':'Invalid'} // field to be updated, and value to set it to, if fse fails validation
+            var fsevalidation_field_exists = {'fseNumberValidation':'already exists. Please contact NYCDOT to review your previous application.'} // field to be updated, and value to set it to, if fse already exists
+            var validation_field_valid = {'bidNumberValidation':'Valid'}    // field to be updated, and value to set it to, if bid passes validation
+            var validation_field_invalid = {'bidNumberValidation':'Invalid'} // field to be updated, and value to set it to, if bid fails validation
+            // ================================================================================
+
+			// Query to get list of all possible FSE values.
+            var fseQueryTask = new QueryTask({
+                url: fse_svc_url
+            });
+            var fsequery = new Query();
+            var fse_features = {};
+            fsequery.returnGeometry = false;
+            fsequery.outFields = [fse_svc_column];
+            fsequery.where = fse_svc_filter;
+            
+            fseQueryTask.execute(fsequery).then(function(list){
+
+                len = list.features.length
+                console.info("FSE list queried. Features queried: " + len)
+
+                for (i = 0; i < len; i++){
+                    fse_no = list.features[i].attributes['Record_ID']
+                    fse_feature = {
+                        fse : fse_no,
+                        restaurantName : list.features[i].attributes['DBA'],
+                        bizName : list.features[i].attributes['Entity_Name'],
+                        bizStreetName : list.features[i].attributes['Street'],
+                        bizBoro : list.features[i].attributes['Borough'],
+                        bizZip : list.features[i].attributes['Zipcode']
+                    }
+                    fse_features[fse_no] = fse_feature
+                }
+            });
+			
+            var queryTask = new QueryTask({
+                url: bid_svc_url
+            });
+            var query = new Query();
+            query.returnGeometry = false;
+            query.outFields = [bid_svc_column];
+            query.where = bid_svc_filter; 
+
+            queryTask.execute(query).then(function(results){
+
+                var bids = []
+                var is_valid = false
+
+                for (i = 0; i<results.features.length; i++) {
+                    bids.push(results.features[i].attributes[bid_svc_column])
+                }
+
+                const survey123WebForm = new Survey123WebForm({
+                    container: "survey123-webform",
+                    clientId: "TcESsljyD6DG0IRA",
+                    portalUrl: "https://nycdot.maps.arcgis.com",
+                    itemId: "8fb542f47f4b42549c69d0a3e01df27d",
+                    onQuestionValueChanged: (v) => {
+                        // Event handler is called on any value change in any field. We are trying
+                        // to minimize the calls to bids.indexOf() and .setQuetionValue - that is why 
+                        // is_valid is maintained
+                        if (v.field==bid_form_field) {
+                            if (v.value.length==bid_value_length ) {
+                                console.info("Bid updated. Field: " + v.field + "; value: " + v.value + "; path: " + v.path)
+                                if (bids.indexOf(v.value) >= 0) {
+                                    console.info("Bid valid.")
+                                    survey123WebForm.setQuestionValue(validation_field_valid)
+                                    is_valid = true
+                                } else {
+                                    console.info("Bid invalid.")
+                                    survey123WebForm.setQuestionValue(validation_field_invalid)
+                                    is_valid = false
+                                }
+                            } else if (is_valid) {
+                                // Invalidate if previously valid and character count wrong
+                                console.info("Bid updated. Field: " + v.field + "; value: " + v.value + "; path: " + v.path)
+                                console.info("Bid invalid.")
+                                survey123WebForm.setQuestionValue(validation_field_invalid)
+                                is_valid = false
+                            }
+                        } else if (v.field == fse_form_field) {
+                            if (v.value.length == fse_value_length){
+                                if (v.value in fse_features) {
+                                    console.info("FSE Number has not been previously submitted and is valid.")
+                                    console.info("FSE Info: " + v.value + "Name: " + fse_features[v.value]['restaurantName'])
+                                    survey123WebForm.setQuestionValue(fsevalidation_field_valid)
+                                    survey123WebForm.setQuestionValue({'restaurantName' : fse_features[v.value]['restaurantName']})
+                                    survey123WebForm.setQuestionValue({'bizName' : fse_features[v.value]['bizName']})
+                                    survey123WebForm.setQuestionValue({'bizDBA' : fse_features[v.value]['bizName']})
+                                    survey123WebForm.setQuestionValue({'bizBldgNum' : fse_features[v.value]['bizBldgNum']})
+                                    survey123WebForm.setQuestionValue({'bizStreetName' : fse_features[v.value]['bizStreetName']})
+                                    survey123WebForm.setQuestionValue({'bizBoro' : fse_features[v.value]['bizBoro']})
+                                    survey123WebForm.setQuestionValue({'bizZip' : fse_features[v.value]['bizZip']})
+                                } else {
+                                    console.info("FSE Number has not been previously submitted and is not valid.")
+                                    survey123WebForm.setQuestionValue(fsevalidation_field_invalid)
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+        })
+    </script>
+</body>
+</html>

@@ -56,7 +56,7 @@ define([
             container: "survey123-webform",
             clientId: "j9ndzScs7UsGvNC9",
             portalUrl: "https://nycdot.maps.arcgis.com",
-            itemId: "336493bbc03345ba8d419ebc5532fcf8"
+            itemId: "336493bbc03345ba8d419ebc5532fcf8",
             onFormLoaded: (data) => {
 
               //
