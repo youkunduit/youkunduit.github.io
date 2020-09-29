@@ -45,8 +45,8 @@
             var fsevalidation_field_valid = {'employee_id_valid':'Valid'}    // field to be updated, and value to set it to, if fse passes validation
             var fsevalidation_field_invalid = {'employee_id_valid':'Invalid'} // field to be updated, and value to set it to, if fse fails validation
             //var fsevalidation_field_exists = {'employee_id_valid':'already exists. Please contact NYCDOT to review your previous application.'} // field to be updated, and value to set it to, if fse already exists
-            var validation_field_valid = {'bidNumberValidation':'Valid'}    // field to be updated, and value to set it to, if bid passes validation
-            var validation_field_invalid = {'bidNumberValidation':'Invalid'} // field to be updated, and value to set it to, if bid fails validation
+            //var validation_field_valid = {'bidNumberValidation':'Valid'}    // field to be updated, and value to set it to, if bid passes validation
+            //var validation_field_invalid = {'bidNumberValidation':'Invalid'} // field to be updated, and value to set it to, if bid fails validation
             // ================================================================================
 
 			// Query to get list of all possible FSE values.
@@ -78,13 +78,13 @@
                 }
             });
 			
-            var queryTask = new QueryTask({
+            /*var queryTask = new QueryTask({
                 url: bid_svc_url
             });
             var query = new Query();
             query.returnGeometry = false;
             query.outFields = [bid_svc_column];
-            query.where = bid_svc_filter; 
+            query.where = bid_svc_filter;
 
             queryTask.execute(query).then(function(results){
 
@@ -93,7 +93,7 @@
 
                 for (i = 0; i<results.features.length; i++) {
                     bids.push(results.features[i].attributes[bid_svc_column])
-                }
+                }*/
 
                 const survey123WebForm = new Survey123WebForm({
                     container: "survey123-webform",
@@ -145,7 +145,7 @@
                         }
                     }
                 });
-            });
+            //});
 
         })
     </script>
