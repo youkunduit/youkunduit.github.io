@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
+    <script src="https://js.arcgis.com/4.14/"></script>
+    <script src="https://survey123.arcgis.com/api/jsapi"></script>
+    <title></title>
+    <style>
+        html,
+        body,
+        #survey123-webform {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="survey123-webform"></div>
+    <script>
+        require(["esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/identity/IdentityManager"], 
+        function(QueryTask, Query) {
+
+            // Information about employees to check Employee ID number against. UPDATE THIS. ============
+            var employee_svc_url = "https://services1.arcgis.com/oOUgp466Coyjcu6V/ArcGIS/rest/services/Sample_Employee_Table/FeatureServer/0"
+            var employee_svc_column = "*"
+            var employee_svc_filter = "1=1"
+            // Information about the form
+            //var bid_form_field = "bidNumber"
+            var employee_form_field = "employee_id"
+            //var bid_value_length = 27 // number of characters that valid BID number has
+            var employee_value_length = 5 // number of characters that valid FSE number has
+            var employeevalidation_field_valid = {'employee_id_valid':'Valid'}    // field to be updated, and value to set it to, if fse passes validation
+            var employeevalidation_field_invalid = {'employee_id_valid':'Invalid'} // field to be updated, and value to set it to, if fse fails validation
+            //var employeevalidation_field_exists = {'employee_id_valid':'already exists. Please contact NYCDOT to review your previous application.'} // field to be updated, and value to set it to, if fse already exists
+            //var validation_field_valid = {'bidNumberValidation':'Valid'}    // field to be updated, and value to set it to, if bid passes validation
+            //var validation_field_invalid = {'bidNumberValidation':'Invalid'} // field to be updated, and value to set it to, if bid fails validation
+            // ================================================================================
+
+			// Query to get list of all possible FSE values.
+            var employeeQueryTask = new QueryTask({
+                url: employee_svc_url
+            });
+            var employeequery = new Query();
+            var employee_features = {};
+            employeequery.returnGeometry = false;
+            employeequery.outFields = [employee_svc_column];
+            employeequery.where = employee_svc_filter;
+            
+            employeeQueryTask.execute(employeequery).then(function(list){
+
+                len = list.features.length
+                console.info("Employee list queried. Records queried: " + len)
+
+                for (i = 0; i < len; i++){
+                    employee_no = list.features[i].attributes['EmployeeID']
+                    employee_feature = {
+                        fse : employee_no,
+                        employeeName : list.features[i].attributes['EmployeeName'],
+                        //bizName : list.features[i].attributes['Entity_Name'],
+                        //bizStreetName : list.features[i].attributes['Street'],
+                        //bizBoro : list.features[i].attributes['Borough'],
+                        //bizZip : list.features[i].attributes['Zipcode']
+                    }
+                    employee_features[employee_no] = employee_feature
+                }
+            });
+			
+            /*var queryTask = new QueryTask({
+                url: bid_svc_url
+            });
+            var query = new Query();
+            query.returnGeometry = false;
+            query.outFields = [bid_svc_column];
+            query.where = bid_svc_filter;
+
+            queryTask.execute(query).then(function(results){
+
+                var bids = []
+                var is_valid = false
+
+                for (i = 0; i<results.features.length; i++) {
+                    bids.push(results.features[i].attributes[bid_svc_column])
+                }*/
+
+                const survey123WebForm = new Survey123WebForm({
+                    container: "survey123-webform",
+                    clientId: "j9ndzScs7UsGvNC9",
+                    portalUrl: "https://nycgov.maps.arcgis.com",
+                    itemId: "60a0fb970ee64bc6ab01545b32718b38",
+                    onQuestionValueChanged: (v) => {
+                        // Event handler is called on any value change in any field. We are trying
+                        // to minimize the calls to bids.indexOf() and .setQuetionValue - that is why 
+                        // is_valid is maintained
+                        /*if (v.field==bid_form_field) {
+                            if (v.value.length==bid_value_length ) {
+                                console.info("Bid updated. Field: " + v.field + "; value: " + v.value + "; path: " + v.path)
+                                if (bids.indexOf(v.value) >= 0) {
+                                    console.info("Bid valid.")
+                                    survey123WebForm.setQuestionValue(validation_field_valid)
+                                    is_valid = true
+                                } else {
+                                    console.info("Bid invalid.")
+                                    survey123WebForm.setQuestionValue(validation_field_invalid)
+                                    is_valid = false
+                                }
+                            } else if (is_valid) {
+                                // Invalidate if previously valid and character count wrong
+                                console.info("Bid updated. Field: " + v.field + "; value: " + v.value + "; path: " + v.path)
+                                console.info("Bid invalid.")
+                                survey123WebForm.setQuestionValue(validation_field_invalid)
+                                is_valid = false
+                            }
+                        } else */
+                        if (v.field == employee_form_field) {
+                            if (v.value.length == employee_value_length){
+                                if (v.value in employee_features) {
+                                    console.info("Employee Number is in the table and is valid.")
+                                    console.info("Employee Info: " + v.value + "Name: " + employee_features[v.value]['employeeName'])
+                                    survey123WebForm.setQuestionValue(employeevalidation_field_valid)
+                                    survey123WebForm.setQuestionValue({'EmployeeName' : employee_features[v.value]['employeeName']})
+                                    //survey123WebForm.setQuestionValue({'bizName' : employee_features[v.value]['bizName']})
+                                    //survey123WebForm.setQuestionValue({'bizDBA' : employee_features[v.value]['bizName']})
+                                    //survey123WebForm.setQuestionValue({'bizBldgNum' : employee_features[v.value]['bizBldgNum']})
+                                    //survey123WebForm.setQuestionValue({'bizStreetName' : employee_features[v.value]['bizStreetName']})
+                                    //survey123WebForm.setQuestionValue({'bizBoro' : employee_features[v.value]['bizBoro']})
+                                    //survey123WebForm.setQuestionValue({'bizZip' : employee_features[v.value]['bizZip']})
+                                } else {
+                                    console.info("Employee Number is not in table and is not valid.")
+                                    survey123WebForm.setQuestionValue(employeevalidation_field_invalid)
+                                }
+                            }
+                        }
+                    }
+                });
+            //});
+
+        })
+    </script>
+</body>
+</html>
