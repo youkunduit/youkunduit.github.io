@@ -38,13 +38,13 @@
             var fse_svc_column = "*"
             var fse_svc_filter = "1=1"
             // Information about the form
-            var bid_form_field = "bidNumber"
-            var fse_form_field = "FSE"
-            var bid_value_length = 27 // number of characters that valid BID number has
-            var fse_value_length = 8 // number of characters that valid FSE number has
-            var fsevalidation_field_valid = {'fseNumberValidation':'Valid'}    // field to be updated, and value to set it to, if fse passes validation
-            var fsevalidation_field_invalid = {'fseNumberValidation':'Invalid'} // field to be updated, and value to set it to, if fse fails validation
-            var fsevalidation_field_exists = {'fseNumberValidation':'already exists. Please contact NYCDOT to review your previous application.'} // field to be updated, and value to set it to, if fse already exists
+            //var bid_form_field = "bidNumber"
+            var fse_form_field = "employee_id"
+            //var bid_value_length = 27 // number of characters that valid BID number has
+            var fse_value_length = 5 // number of characters that valid FSE number has
+            var fsevalidation_field_valid = {'employee_id_valid':'Valid'}    // field to be updated, and value to set it to, if fse passes validation
+            var fsevalidation_field_invalid = {'employee_id_valid':'Invalid'} // field to be updated, and value to set it to, if fse fails validation
+            //var fsevalidation_field_exists = {'employee_id_valid':'already exists. Please contact NYCDOT to review your previous application.'} // field to be updated, and value to set it to, if fse already exists
             var validation_field_valid = {'bidNumberValidation':'Valid'}    // field to be updated, and value to set it to, if bid passes validation
             var validation_field_invalid = {'bidNumberValidation':'Invalid'} // field to be updated, and value to set it to, if bid fails validation
             // ================================================================================
@@ -62,17 +62,17 @@
             fseQueryTask.execute(fsequery).then(function(list){
 
                 len = list.features.length
-                console.info("FSE list queried. Features queried: " + len)
+                console.info("Employee list queried. Records queried: " + len)
 
                 for (i = 0; i < len; i++){
-                    fse_no = list.features[i].attributes['Record_ID']
+                    fse_no = list.features[i].attributes['EmployeeID']
                     fse_feature = {
                         fse : fse_no,
-                        restaurantName : list.features[i].attributes['DBA'],
-                        bizName : list.features[i].attributes['Entity_Name'],
-                        bizStreetName : list.features[i].attributes['Street'],
-                        bizBoro : list.features[i].attributes['Borough'],
-                        bizZip : list.features[i].attributes['Zipcode']
+                        employeeName : list.features[i].attributes['DBA'],
+                        //bizName : list.features[i].attributes['Entity_Name'],
+                        //bizStreetName : list.features[i].attributes['Street'],
+                        //bizBoro : list.features[i].attributes['Borough'],
+                        //bizZip : list.features[i].attributes['Zipcode']
                     }
                     fse_features[fse_no] = fse_feature
                 }
@@ -104,7 +104,7 @@
                         // Event handler is called on any value change in any field. We are trying
                         // to minimize the calls to bids.indexOf() and .setQuetionValue - that is why 
                         // is_valid is maintained
-                        if (v.field==bid_form_field) {
+                        /*if (v.field==bid_form_field) {
                             if (v.value.length==bid_value_length ) {
                                 console.info("Bid updated. Field: " + v.field + "; value: " + v.value + "; path: " + v.path)
                                 if (bids.indexOf(v.value) >= 0) {
@@ -123,19 +123,20 @@
                                 survey123WebForm.setQuestionValue(validation_field_invalid)
                                 is_valid = false
                             }
-                        } else if (v.field == fse_form_field) {
+                        } else */
+                        if (v.field == fse_form_field) {
                             if (v.value.length == fse_value_length){
                                 if (v.value in fse_features) {
-                                    console.info("FSE Number has not been previously submitted and is valid.")
-                                    console.info("FSE Info: " + v.value + "Name: " + fse_features[v.value]['restaurantName'])
+                                    console.info("FSE Number has been previously submitted and is valid.")
+                                    console.info("FSE Info: " + v.value + "Name: " + fse_features[v.value]['employeeName'])
                                     survey123WebForm.setQuestionValue(fsevalidation_field_valid)
-                                    survey123WebForm.setQuestionValue({'restaurantName' : fse_features[v.value]['restaurantName']})
-                                    survey123WebForm.setQuestionValue({'bizName' : fse_features[v.value]['bizName']})
-                                    survey123WebForm.setQuestionValue({'bizDBA' : fse_features[v.value]['bizName']})
-                                    survey123WebForm.setQuestionValue({'bizBldgNum' : fse_features[v.value]['bizBldgNum']})
-                                    survey123WebForm.setQuestionValue({'bizStreetName' : fse_features[v.value]['bizStreetName']})
-                                    survey123WebForm.setQuestionValue({'bizBoro' : fse_features[v.value]['bizBoro']})
-                                    survey123WebForm.setQuestionValue({'bizZip' : fse_features[v.value]['bizZip']})
+                                    survey123WebForm.setQuestionValue({'EmployeeName' : fse_features[v.value]['employeeName']})
+                                    //survey123WebForm.setQuestionValue({'bizName' : fse_features[v.value]['bizName']})
+                                    //survey123WebForm.setQuestionValue({'bizDBA' : fse_features[v.value]['bizName']})
+                                    //survey123WebForm.setQuestionValue({'bizBldgNum' : fse_features[v.value]['bizBldgNum']})
+                                    //survey123WebForm.setQuestionValue({'bizStreetName' : fse_features[v.value]['bizStreetName']})
+                                    //survey123WebForm.setQuestionValue({'bizBoro' : fse_features[v.value]['bizBoro']})
+                                    //survey123WebForm.setQuestionValue({'bizZip' : fse_features[v.value]['bizZip']})
                                 } else {
                                     console.info("FSE Number has not been previously submitted and is not valid.")
                                     survey123WebForm.setQuestionValue(fsevalidation_field_invalid)
